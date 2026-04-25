@@ -1,0 +1,30 @@
+# Copy to apps.yaml (same folder) and edit paths for your PC.
+# Only actions defined here can run.
+
+apps:
+  - id: notepad
+    phrases:
+      - open notepad
+      - notepad och
+      - notepadni och
+    open:
+      kind: shell_execute
+      target: notepad
+
+  - id: calculator
+    phrases:
+      - open calculator
+      - calculator och
+      - kalkulyatorni och
+    open:
+      kind: shell_execute
+      target: calc
+
+  - id: explorer
+    phrases:
+      - open file explorer
+      - explorer och
+      - fayl menejerni och
+    open:
+      kind: shell_execute
+      target: explorer

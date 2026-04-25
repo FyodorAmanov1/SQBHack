@@ -1,0 +1,76 @@
+# RealTimeVoice — production compose file.
+#
+# Usage on the server (46.225.79.113):
+#   1. Fill in backend/.env (OpenAI key, TTS_BACKEND=edge recommended for CPU, …).
+#   2. docker compose build
+#   3. docker compose up -d
+#
+# Exposed ports:
+#   3000 -> Next.js frontend   (http://46.225.79.113:3000)
+#   8000 -> FastAPI backend    (http://46.225.79.113:8000  and  ws://…/ws/voice)
+#
+# CORS on the backend is open to all origins (see backend/app/main.py).
+
+name: realtimevoice
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: realtimevoice-backend:latest
+    container_name: realtimevoice-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override anything .env sets that must match the containerized layout.
+      FRONTEND_ORIGIN: "*"
+      STT_MODEL_CACHE_DIR: "/app/models/whisper_ct2"
+      HF_HOME: "/app/.cache/huggingface"
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist HF downloads + auto-converted CT2 Whisper weights across restarts.
+      - backend_hf_cache:/app/.cache/huggingface
+      - backend_torch_cache:/app/.cache/torch
+      - backend_models:/app/models
+      # Reference voices (optional). Mount your WAV folder read-only.
+      - ./myVoice:/app/myVoice:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    # Uncomment to use an NVIDIA GPU on the host (requires nvidia-container-toolkit
+    # and a CUDA-based FROM line in backend/Dockerfile).
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Public env is baked in at build time (Next.js inlines NEXT_PUBLIC_*).
+        NEXT_PUBLIC_WS_URL: "ws://46.225.79.113:8000/ws/voice"
+        NEXT_PUBLIC_API_URL: "http://46.225.79.113:8000"
+        NEXT_PUBLIC_WS_API_KEY: ""
+    image: realtimevoice-frontend:latest
+    container_name: realtimevoice-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  backend_hf_cache:
+  backend_torch_cache:
+  backend_models:

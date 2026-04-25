@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+.env.local
+tests/
+models/
+*.wav
+*.log
+.DS_Store
+Dockerfile
+.dockerignore
