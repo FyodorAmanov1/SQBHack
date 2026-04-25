@@ -49,6 +49,30 @@ router = APIRouter(
     dependencies=[Depends(require_optional_api_key)],
 )
 
+@router.get("/client-analytics/{client_id}")
+async def get_client_analytics(client_id: str):
+    """
+    Simulates a database fetch for a specific client's analytics.
+    Use this endpoint to populate the operator's financial dashboard.
+    """
+    return {
+        "client_id": client_id,
+        "name": "Sarah Johnson",
+        "creditScore": 742,
+        "accounts": [
+            {"id": "1", "type": "Credit Card", "balance": 1250.0, "limit": 5000.0},
+            {"id": "2", "type": "Personal Loan", "balance": 4500.0, "limit": 10000.0},
+        ],
+        "history": [
+            {"date": "2024-03-01", "event": "On-time payment - Credit Card"},
+            {"date": "2024-02-15", "event": "New account opened - Personal Loan"},
+            {"date": "2023-11-10", "event": "Credit line increase approved"},
+        ],
+        "relatives": [
+            {"name": "Mark Johnson", "relation": "Spouse", "linked_accounts": 1}
+        ]
+    }
+
 
 class LlmRequest(BaseModel):
     messages: list[dict[str, str]] = Field(
