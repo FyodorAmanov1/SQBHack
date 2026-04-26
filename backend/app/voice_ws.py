@@ -52,8 +52,28 @@ def _resolve_ws_speaker(settings, raw: str) -> str | None:
 
 async def handle_voice_websocket(websocket: WebSocket) -> None:
     """WebSocket must already be accepted (e.g. after optional auth in main)."""
-    correlation_id = uuid.uuid4().hex[:12]
     settings = get_settings()
+    if not settings.stt_enabled:
+        try:
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "error",
+                        "code": "STT_DISABLED",
+                        "message": (
+                            "Server STT o‘chirilgan. Call-center sahifasida brauzer nutq API "
+                            "ishlating yoki .env da STT_ENABLED=true qiling."
+                        ),
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        except Exception:
+            pass
+        await websocket.close()
+        return
+
+    correlation_id = uuid.uuid4().hex[:12]
     buffer = bytearray()
     client_sr = 16000
     encoding = "pcm_s16le"

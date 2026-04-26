@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import re
 from pathlib import Path
@@ -279,3 +280,75 @@ async def _ollama_raw_messages(messages: list[dict[str, str]], settings: Setting
     if not content and isinstance(data.get("response"), str):
         content = data["response"]
     return str(content).strip()
+
+
+_JSON_FENCE_RE = re.compile(r"```(?:json)?\s*([\s\S]*?)```", re.IGNORECASE)
+
+OPERATOR_ADVICE_SYSTEM = """Sen bank call-markazidagi operator uchun maslahatchisan. Javobing FAQAT \
+valid JSON bo‘lishi kerak, boshqa matn yo‘q. \
+Format (o‘zbek lotinida title va content):
+{"panels":[
+  {"title":"...","content":"..."},
+  {"title":"...","content":"..."},
+  {"title":"...","content":"..."}
+]}
+Uchta panel:
+1) Darhol qilish — operatorning keyingi amali.
+2) Mijoz bilan muloqot — aytish mumkin bo‘lgan tabiiy iboralar.
+3) Xavf va ruxsat — cheklovlar, identifikatsiya, shubhali operatsiyalar.
+
+Javoblar qisqa, aniq, xavfsizlik va mijozga hurmat bilan. Agar transkript bo‘sh bo‘lsa, \
+umumiy ehtiyotkorlik maslahatlari ber."""
+
+
+def _parse_operator_advice_json(raw: str) -> list[dict[str, str]]:
+    text = (raw or "").strip()
+    m = _JSON_FENCE_RE.search(text)
+    if m:
+        text = m.group(1).strip()
+    data = json.loads(text)
+    panels = data.get("panels")
+    if not isinstance(panels, list):
+        raise ValueError("JSONda 'panels' ro‘yxati kutilgan")
+    out: list[dict[str, str]] = []
+    for item in panels[:3]:
+        if not isinstance(item, dict):
+            continue
+        t = str(item.get("title") or "").strip()
+        c = str(item.get("content") or "").strip()
+        if t or c:
+            out.append({"title": t or "—", "content": c or "—"})
+    while len(out) < 3:
+        out.append(
+            {
+                "title": "Ma’lumot yetarli emas",
+                "content": "Transkriptni yangilang yoki mijoz ma’lumotini tekshiring.",
+            }
+        )
+    return out[:3]
+
+
+async def generate_operator_advice_panels(
+    client_context: str,
+    transcript: str,
+    settings: Settings,
+) -> list[dict[str, str]]:
+    """Return three {title, content} dicts from the LLM as JSON."""
+    user = (
+        "Mijoz konteksti (JSON yoki qisqacha):\n"
+        f"{client_context}\n\n"
+        "So‘nggi suhbat transkripti (operator va mijoz):\n"
+        f"{(transcript or '').strip()[:12000]}"
+    )
+    messages: list[dict[str, str]] = [
+        {"role": "system", "content": OPERATOR_ADVICE_SYSTEM},
+        {"role": "user", "content": user},
+    ]
+    raw = await generate_from_messages(messages, settings)
+    try:
+        return _parse_operator_advice_json(raw)
+    except (json.JSONDecodeError, ValueError, TypeError) as e:
+        logger.warning("operator advice JSON parse failed: %s — raw=%s", e, raw[:500])
+        raise RuntimeError(
+            "LLM javobi JSON formatida emas. Modelni qayta urinib ko‘ring."
+        ) from e

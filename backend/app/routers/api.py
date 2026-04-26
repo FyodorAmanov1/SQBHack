@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import tempfile
+import time
 from pathlib import Path
 from typing import Annotated
 
@@ -49,29 +51,146 @@ router = APIRouter(
     dependencies=[Depends(require_optional_api_key)],
 )
 
+def client_analytics_snapshot(client_id: str) -> dict:
+    """Synthetic CRM payload for the operator dashboard (any client_id is accepted for demo)."""
+    display_id = (client_id or "AD0135673").strip() or "AD0135673"
+    return {
+        "client_id": display_id,
+        "name": "Dilshoda Karimova",
+        "creditScore": 742,
+        "currency": "UZS",
+        "balance": 12_450_000.0,
+        "accounts": [
+            {
+                "id": "1",
+                "type": "Kredit karta",
+                "balance": 1_250_000.0,
+                "limit": 5_000_000.0,
+            },
+            {
+                "id": "2",
+                "type": "Iste'mol krediti",
+                "balance": 4_500_000.0,
+                "limit": 10_000_000.0,
+            },
+        ],
+        "transactions": [
+            {
+                "at": "2024-11-20T14:32:00",
+                "amount": -125_000.0,
+                "kind": "debit",
+                "description": "POS to‘lovi — O‘rmon bozori",
+            },
+            {
+                "at": "2024-11-18T09:10:00",
+                "amount": 3_200_000.0,
+                "kind": "credit",
+                "description": "Ish haqi o‘tkazmasi",
+            },
+            {
+                "at": "2024-11-15T11:00:00",
+                "amount": -45_000.0,
+                "kind": "fee",
+                "description": "Karta xizmat haqi",
+            },
+        ],
+        "history": [
+            {
+                "date": "2024-03-01",
+                "event": "Muddatli to‘lov — kredit karta",
+            },
+            {
+                "date": "2024-02-15",
+                "event": "Yangi kredit shartnomasi imzolandi",
+            },
+            {
+                "date": "2023-11-10",
+                "event": "Kredit limiti oshirildi",
+            },
+        ],
+        "relatives": [
+            {
+                "name": "Javlon Karimov",
+                "relation": "Turmush o‘rtoq",
+                "linked_accounts": 1,
+            }
+        ],
+    }
+
+
 @router.get("/client-analytics/{client_id}")
 async def get_client_analytics(client_id: str):
     """
     Simulates a database fetch for a specific client's analytics.
     Use this endpoint to populate the operator's financial dashboard.
     """
-    return {
-        "client_id": client_id,
-        "name": "Sarah Johnson",
-        "creditScore": 742,
-        "accounts": [
-            {"id": "1", "type": "Credit Card", "balance": 1250.0, "limit": 5000.0},
-            {"id": "2", "type": "Personal Loan", "balance": 4500.0, "limit": 10000.0},
-        ],
-        "history": [
-            {"date": "2024-03-01", "event": "On-time payment - Credit Card"},
-            {"date": "2024-02-15", "event": "New account opened - Personal Loan"},
-            {"date": "2023-11-10", "event": "Credit line increase approved"},
-        ],
-        "relatives": [
-            {"name": "Mark Johnson", "relation": "Spouse", "linked_accounts": 1}
-        ]
-    }
+    return client_analytics_snapshot(client_id)
+
+
+class AdvicePanelOut(BaseModel):
+    title: str
+    content: str
+    model_config = {"populate_by_name": True}
+
+
+class OperatorAdviceRequest(BaseModel):
+    model_config = {"populate_by_name": True}
+    client_id: str = Field(
+        ...,
+        description="Mijoz ID (masalan, AD0135673)",
+    )
+    transcript: str = Field(default="", description="So‘nggi suhbat transkripti")
+    use_server_client_context: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "use_server_client_context",
+            "useServerClientContext",
+        ),
+        description="True bo‘lsa, mijoz konteksti serverdagi /client-analytics ma’lumotidan olinadi",
+    )
+
+
+class OperatorAdviceResponse(BaseModel):
+    model_config = {"populate_by_name": True}
+    panels: list[AdvicePanelOut]
+    updated_at_epoch_ms: int = Field(
+        ...,
+        serialization_alias="updatedAt",
+        description="Maslahat generatsiya vaqti (ms, Unix)",
+    )
+
+
+@router.post(
+    "/operator-advice",
+    response_model=OperatorAdviceResponse,
+    response_model_by_alias=True,
+)
+async def operator_advice(
+    body: OperatorAdviceRequest,
+) -> OperatorAdviceResponse:
+    """Uchta maslahat paneli: LLM JSON (operator + mijoz suhbati uchun)."""
+    settings = get_settings()
+    if body.use_server_client_context:
+        snap = client_analytics_snapshot(body.client_id)
+        ctx = json.dumps(snap, ensure_ascii=False, indent=2)
+    else:
+        ctx = "{}"
+    try:
+        raw_panels = await llm_svc.generate_operator_advice_panels(
+            ctx,
+            body.transcript,
+            settings,
+        )
+    except Exception as e:
+        logger.exception("operator advice failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    panels = [
+        AdvicePanelOut(title=p["title"], content=p["content"]) for p in raw_panels
+    ]
+    return OperatorAdviceResponse(
+        panels=panels,
+        updated_at_epoch_ms=int(time.time() * 1000),
+    )
 
 
 class LlmRequest(BaseModel):
@@ -175,6 +294,14 @@ async def list_voices(
 @router.post("/stt", response_model=SttResponse)
 async def stt_endpoint(file: UploadFile = File(...)) -> SttResponse:
     settings = get_settings()
+    if not settings.stt_enabled:
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                "Server-side STT is disabled. Use browser speech recognition on the call-center "
+                "page, or set STT_ENABLED=true in the backend .env to enable POST /stt."
+            ),
+        )
     suffix = Path(file.filename or "audio.wav").suffix.lower()
     if suffix not in (".wav", ".flac", ".ogg", ".webm", ".mp3", ".m4a"):
         suffix = ".wav"

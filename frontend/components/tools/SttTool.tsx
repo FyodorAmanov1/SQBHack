@@ -29,6 +29,12 @@ export function SttTool() {
         } catch {
           /* ignore */
         }
+        if (res.status === 501) {
+          throw new Error(
+            `${detail} — call-center asosiy sahifasida brauzer nutq API ishlatiladi; ` +
+              "server STT uchun backend .env da STT_ENABLED=true qiling.",
+          );
+        }
         throw new Error(detail);
       }
       const data = (await res.json()) as { text: string };

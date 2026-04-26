@@ -11,6 +11,10 @@ from fastapi.testclient import TestClient
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
     """Stub out model loads and services so the FastAPI app can start offline."""
+    monkeypatch.setenv("STT_ENABLED", "true")
+    from app.config import get_settings
+
+    get_settings.cache_clear()
     from app import main as main_mod
     from app.services import llm as llm_svc
     from app.services import stt as stt_svc

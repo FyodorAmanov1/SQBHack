@@ -27,7 +27,10 @@ async def lifespan(app: FastAPI):
 
     settings = get_settings()
     logger.info("Starting up: loading models…")
-    stt_svc.init_model(settings)
+    if settings.stt_enabled:
+        stt_svc.init_model(settings)
+    else:
+        logger.info("Server STT disabled (stt_enabled=false); skipping Whisper init.")
     tts_svc.init_model(settings)
     voices_svc.refresh_voice_catalog(settings)
     llm_svc.init_client(settings)

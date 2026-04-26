@@ -17,6 +17,10 @@ class Settings(BaseSettings):
 
     frontend_origin: str = "http://localhost:3000"
 
+    # When false, server STT (faster-whisper) is not loaded; POST /stt returns 501 and
+    # /ws/voice closes with STT_DISABLED. Call-center UI uses Web Speech API in the browser.
+    stt_enabled: bool = False
+
     # STT (defaults tuned for Uzbek voice: larger model + beam + language lock)
     # Accepts an official Whisper size ("small", "large-v3", ...), a local CTranslate2
     # directory, or a HF repo id like "islomov/rubaistt_v2_medium" — HF repos are
