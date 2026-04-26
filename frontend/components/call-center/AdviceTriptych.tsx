@@ -3,14 +3,17 @@
 import type { AdvicePanel } from "@/lib/clientAnalytics";
 
 const PLACEHOLDERS: AdvicePanel[] = [
-  { title: "Darhol qilish", content: "Maslahatni olish uchun «Yangilash»ni bosing." },
+  {
+    title: "Darhol qilish",
+    content: "Maslahat olish uchun yuqorida «Maslahatni yangilash» tugmasini bosing.",
+  },
   {
     title: "Mijoz bilan muloqot",
-    content: "Transkript paydo bo‘lgach, AI tavsiyalarini shu yerda ko‘rasiz.",
+    content: "Eshitishni yoqing, transkript to‘plang, keyin maslahatni yangilang.",
   },
   {
     title: "Xavf va ruxsat",
-    content: "Identifikatsiya va xavfsizlik bo‘yicha eslatmalar shu yerga chiqadi.",
+    content: "Identifikatsiya va xavfsizlik bo‘yicha tavsiyalar shu yerga chiqadi.",
   },
 ];
 
@@ -38,13 +41,9 @@ export function AdviceTriptych({ panels, loading, error, updatedAt }: Props) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          AI maslahatlari
-        </h2>
-        <p className="text-xs text-zinc-500">
-          Yangilangan: {formatTime(updatedAt)}
-        </p>
+      <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
+        <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">2. AI yordam</h2>
+        <p className="text-xs text-zinc-500">Yangilangan: {formatTime(updatedAt)}</p>
       </div>
       {error && (
         <p className="mb-2 shrink-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950/50 dark:text-red-200">

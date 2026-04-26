@@ -297,6 +297,12 @@ Uchta panel:
 2) Mijoz bilan muloqot — aytish mumkin bo‘lgan tabiiy iboralar.
 3) Xavf va ruxsat — cheklovlar, identifikatsiya, shubhali operatsiyalar.
 
+Muhim: transkriptda kredit, karta, qo‘shimcha xizmat yoki mahsulot turi tilga olinyapti, lekin \
+mijoz kontekstidagi JSONda shu tafsilotlar bo‘lmasa ham, umumiy bank amaliyoti, ehtiyotkorlik \
+va yuridik cheklovlar bo‘yicha qisqa maslahat ber. Tafsilotlar noma’lum bo‘lsa, buni aytib, \
+qanday aniq so‘roq (masalan, shartnoma, ID, limit, muddati) yoki qaysi tizimda tekshirish \
+kerakligini tavsiya et.
+
 Javoblar qisqa, aniq, xavfsizlik va mijozga hurmat bilan. Agar transkript bo‘sh bo‘lsa, \
 umumiy ehtiyotkorlik maslahatlari ber."""
 
@@ -335,10 +341,13 @@ async def generate_operator_advice_panels(
 ) -> list[dict[str, str]]:
     """Return three {title, content} dicts from the LLM as JSON."""
     user = (
-        "Mijoz konteksti (JSON yoki qisqacha):\n"
+        "Mijoz konteksti (JSON yoki qisqacha) — barcha mahsulotlar ro‘yxati bo‘lmasligi mumkin; "
+        "transkriptdagi tahlillar uchun transkript ham muhim:\n"
         f"{client_context}\n\n"
         "So‘nggi suhbat transkripti (operator va mijoz):\n"
-        f"{(transcript or '').strip()[:12000]}"
+        f"{(transcript or '').strip()[:12000]}\n\n"
+        "Eslatma: suhbatda tilga olingan, lekin yuqoridagi JSONda ko‘rinmaydigan kredit, karta yoki "
+        "xizmat bo‘yicha ham umumiy maslahat bering; kerakli tekshiruvlarni aytib o‘ting."
     )
     messages: list[dict[str, str]] = [
         {"role": "system", "content": OPERATOR_ADVICE_SYSTEM},

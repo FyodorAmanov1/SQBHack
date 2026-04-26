@@ -88,12 +88,10 @@ export function CallCenterListener({ onTranscriptChange }: Props) {
 
   return (
     <div className="flex h-full min-h-0 flex-col p-4">
-      <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-        Suhbatni eshitish
-      </h2>
+      <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">3. Suhbat</h2>
       <p className="mt-1 text-xs text-zinc-500">
-        Mijoz va operator ovozi bitta oqimda. Nutq brauzerda matnga aylantiriladi; serverga
-        yuborilmaydi.
+        Nutq bu joyda matnga aylantiriladi; ovoz yuborilmaydi. Mijoz va operator bitta oqimda
+        eshitilishi mumkin.
       </p>
 
       {envReady && insecure && (
@@ -131,7 +129,7 @@ export function CallCenterListener({ onTranscriptChange }: Props) {
           <span className="whitespace-pre-wrap">{displayLine}</span>
         ) : (
           <span className="text-zinc-400">
-            Eshitishni boshlang — matn shu yerda paydo bo‘ladi.
+            «Eshitishni boshlash»ni bosing, matn shu yerda paydo bo‘ladi.
           </span>
         )}
       </div>

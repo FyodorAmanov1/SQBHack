@@ -10,6 +10,8 @@ Real-time Uzbek voice chat: browser microphone → **FastAPI** WebSocket → **f
 
 ## Docker on the server
 
+**New to this?** Follow **[deploy/QUICK-START.md](deploy/QUICK-START.md)** (short checklist: `.env` → one line in `docker/Caddyfile` → `docker compose up`).
+
 Use the included **Caddy** service (default **HTTP** on port **80** via [`docker/Caddyfile`](docker/Caddyfile) — edit the first line to your **domain** for **HTTPS**). The **browser uses one origin**; paths like `/stt` and `/ws/voice` go to FastAPI, everything else to Next.
 
 1. Copy and edit the root [`.env.example`](.env.example) → **`.env`** (same folder as `docker-compose.yml` — **not** `frontend/.env`). Set **`PUBLIC_ORIGIN`** and **`WS_URL`** to match what users will type. For a **real domain with HTTPS**, change the first line of [`docker/Caddyfile`](docker/Caddyfile) from **`:80 {`** to **`aytingchi.uz {`** (your domain) and use **`https` / `wss`** in `.env` — then `docker compose up -d` again.
@@ -17,7 +19,7 @@ Use the included **Caddy** service (default **HTTP** on port **80** via [`docker
 3. From the **repo root**: `docker compose build` then `docker compose up -d`.
 4. Open **`PUBLIC_ORIGIN`** in a browser (no **`:3000`** / **`:8000`**).
 
-**Optional:** uncomment **`backend.ports`** in `docker-compose.yml` to expose `8000` on the host for debugging. Full host setup (firewall, DNS) is in [deploy/SERVER-SETUP.md](deploy/SERVER-SETUP.md).
+**Optional:** uncomment **`backend.ports`** in `docker-compose.yml` to expose `8000` on the host for debugging. Full host setup (firewall, DNS) is in [deploy/SERVER-SETUP.md](deploy/SERVER-SETUP.md). **HTTPS with Certbot** vs Caddy’s built-in Let’s Encrypt: [deploy/https-certbot-and-caddy.md](deploy/https-certbot-and-caddy.md).
 
 ## Prerequisites
 

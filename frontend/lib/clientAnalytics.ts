@@ -5,13 +5,34 @@ export type ClientTransaction = {
   description: string;
 };
 
+export type ClientAccount = {
+  id: string;
+  type: string;
+  balance: number;
+  limit: number;
+  /** Hisob valyutasi, bo'lmaganda umumiy `currency` ishlatiladi */
+  currency?: string;
+};
+
+export type ClientCreditProduct = {
+  id: string;
+  type: string;
+  /** Chizma/karta: mavjud; qarz krediti uchun 0 */
+  balance: number;
+  limit: number;
+  /** Qolgan asosiy qarz (kredit) */
+  outstanding?: number;
+};
+
 export type ClientAnalytics = {
   client_id: string;
   name: string;
   creditScore: number;
   currency: string;
   balance: number;
-  accounts: { id: string; type: string; balance: number; limit: number }[];
+  accounts: ClientAccount[];
+  /** Faol kredit / plastik / muddatli mahsulotlar (sintetik) */
+  credit_products?: ClientCreditProduct[];
   transactions: ClientTransaction[];
   history: { date: string; event: string }[];
   relatives?: { name: string; relation: string; linked_accounts: number }[];
