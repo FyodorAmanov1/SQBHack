@@ -39,7 +39,8 @@ function normalizeAdvicePayload(j: unknown): OperatorAdviceResponse | null {
 
 export function CallCenterDashboard() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const layoutKey = isDesktop ? "callcenter-h" : "callcenter-v";
+  /** v2: v4 treats numeric panel sizes as px (not %); old localStorage may also store bad splits. */
+  const layoutKey = isDesktop ? "callcenter-h-v2" : "callcenter-v-v2";
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
     id: layoutKey,
     panelIds: ["client", "work"],
@@ -147,10 +148,10 @@ export function CallCenterDashboard() {
     >
       <Panel
         id="client"
-        defaultSize={isDesktop ? 35 : 42}
-        minSize={isDesktop ? 22 : 28}
-        maxSize={isDesktop ? 55 : 60}
-        className="min-h-0"
+        defaultSize={isDesktop ? "35%" : "42%"}
+        minSize={isDesktop ? "22%" : "28%"}
+        maxSize={isDesktop ? "55%" : "60%"}
+        className="min-h-0 min-w-0"
       >
         <section
           className="h-full min-h-0 overflow-y-auto border-b border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-950/50 lg:border-b-0 lg:border-r"
@@ -171,7 +172,12 @@ export function CallCenterDashboard() {
         }
         aria-label="Kenglikni o‘zgartirish"
       />
-      <Panel id="work" minSize={isDesktop ? 30 : 25} className="min-h-0">
+      <Panel
+        id="work"
+        defaultSize={isDesktop ? "65%" : "58%"}
+        minSize={isDesktop ? "30%" : "25%"}
+        className="min-h-0 min-w-0"
+      >
         <div className="flex h-full min-h-0 min-w-0 flex-col bg-white dark:bg-zinc-900">
           <div className="min-h-0 min-w-0 flex-1 overflow-hidden border-b border-zinc-200 p-4 dark:border-zinc-800">
             <AdviceTriptych
