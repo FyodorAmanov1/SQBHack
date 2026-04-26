@@ -1,8 +1,15 @@
-# Caddy: public HTTP on :80. Routes FastAPI by path, everything else to Next.
-# For automatic HTTPS, replace the first line with your domain, e.g.  aytingchi.uz  {  (same block body).
-# Service DNS: backend, frontend (compose network).
+# Caddy: HTTPS with automatic Let’s Encrypt.
+#
+# Two names in one block = one certificate for BOTH (new “identifier set” vs aytingchi.uz alone;
+# use this if production LE rate-limits repeated single-name issuances).
+#
+# DNS required before first HTTPS works:
+#   - A/AAAA: aytingchi.uz -> server IP
+#   - A/AAAA: www.aytingchi.uz -> same IP  OR  CNAME: www -> aytingchi.uz
+#
+# Service DNS on compose network: backend, frontend
 
-:80 {
+aytingchi.uz, www.aytingchi.uz {
 	encode zstd gzip
 
 	@api {
