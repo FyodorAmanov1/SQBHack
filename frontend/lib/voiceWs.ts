@@ -13,15 +13,28 @@ function withWsToken(url: string): string {
   return `${url}${sep}token=${encodeURIComponent(tok)}`;
 }
 
+function isLocalHost(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]"
+  );
+}
+
 export function defaultWsUrl(): string {
   if (typeof window === "undefined") {
     return withWsToken("ws://127.0.0.1:8000/ws/voice");
+  }
+  const { protocol, hostname, host } = window.location;
+  if (!isLocalHost(hostname)) {
+    // Production: Caddy serves /ws on the same host as the page (no :8000)
+    const wsProto = protocol === "https:" ? "wss:" : "ws:";
+    return withWsToken(`${wsProto}//${host}/ws/voice`);
   }
   const env = process.env.NEXT_PUBLIC_WS_URL?.trim();
   const base =
     env ||
     (() => {
-      const { protocol, hostname } = window.location;
       const wsProto = protocol === "https:" ? "wss:" : "ws:";
       return `${wsProto}//${hostname}:8000/ws/voice`;
     })();

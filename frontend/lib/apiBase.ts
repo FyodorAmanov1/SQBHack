@@ -1,9 +1,23 @@
 /**
- * HTTP origin for FastAPI REST (/stt, /llm, /tts).
- * Uses NEXT_PUBLIC_API_URL, else derives from NEXT_PUBLIC_WS_URL origin, else dev fallback.
+ * HTTP origin for FastAPI REST (paths like /client-analytics, /operator-advice, …).
+ * In production behind Caddy, API is on the same host as the page (no :8000 in the browser);
+ * we use window.location.origin so a baked NEXT_PUBLIC_API_URL of https://aytingchi.uz does not
+ * break when users open https://www.aytingchi.uz (or vice versa) while TLS is name-specific.
+ * Local dev still uses :8000 or env overrides.
  */
 
+function isLocalHost(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]"
+  );
+}
+
 export function apiOrigin(): string {
+  if (typeof window !== "undefined" && !isLocalHost(window.location.hostname)) {
+    return window.location.origin;
+  }
   const explicit = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (explicit) {
     return explicit.replace(/\/+$/, "");
