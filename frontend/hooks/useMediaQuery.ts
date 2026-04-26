@@ -1,20 +1,23 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-
-function subscribeMediaQuery(query: string, callback: () => void) {
-  const m = window.matchMedia(query);
-  m.addEventListener("change", callback);
-  return () => m.removeEventListener("change", callback);
-}
+import { useLayoutEffect, useState } from "react";
 
 /**
- * Avoids hydration mismatch: server snapshot is false; after mount, matches client width.
+ * matchMedia in the browser. First render always `false` (matches SSR and avoids
+ * hydration skew). Real value is applied after `useLayoutEffect`.
  */
 export function useMediaQuery(query: string): boolean {
-  return useSyncExternalStore(
-    (onStoreChange) => subscribeMediaQuery(query, onStoreChange),
-    () => window.matchMedia(query).matches,
-    () => false,
-  );
+  const [matches, setMatches] = useState(false);
+
+  useLayoutEffect(() => {
+    const m = window.matchMedia(query);
+    setMatches(m.matches);
+    const onChange = () => {
+      setMatches(m.matches);
+    };
+    m.addEventListener("change", onChange);
+    return () => m.removeEventListener("change", onChange);
+  }, [query]);
+
+  return matches;
 }

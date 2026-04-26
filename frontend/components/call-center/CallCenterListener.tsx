@@ -87,7 +87,7 @@ export function CallCenterListener({ onTranscriptChange }: Props) {
   }, [finalTextRef, onTranscriptChange, resetSpeechTranscript]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col p-4">
+    <div className="flex h-full min-h-0 flex-col p-5">
       <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">3. Suhbat</h2>
       <p className="mt-1 text-xs text-zinc-500">
         Nutq bu joyda matnga aylantiriladi; ovoz yuborilmaydi. Mijoz va operator bitta oqimda
@@ -122,7 +122,7 @@ export function CallCenterListener({ onTranscriptChange }: Props) {
       </div>
 
       <div
-        className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 text-sm leading-relaxed text-zinc-800 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-200"
+        className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 text-sm leading-relaxed text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-200"
         aria-live="polite"
       >
         {displayLine ? (

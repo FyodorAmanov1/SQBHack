@@ -53,11 +53,11 @@ export function AdviceTriptych({ panels, loading, error, updatedAt }: Props) {
       {loading && (
         <p className="mb-2 text-sm text-zinc-500">Maslahat hisoblanmoqda…</p>
       )}
-      <div className="grid min-h-0 flex-1 grid-rows-3 gap-3 overflow-hidden">
+      <div className="grid min-h-0 flex-1 grid-rows-3 gap-4 overflow-hidden">
         {list.map((p, i) => (
           <div
             key={`${p.title}-${i}`}
-            className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-amber-200/80 bg-amber-50/90 p-4 dark:border-amber-900/50 dark:bg-amber-950/30"
+            className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-amber-200/80 bg-amber-50/90 p-5 dark:border-amber-900/50 dark:bg-amber-950/30"
           >
             <h3 className="shrink-0 text-sm font-semibold text-amber-900 dark:text-amber-100">
               {p.title}
