@@ -147,7 +147,13 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Ensure `NEXT_PUBLIC_WS_URL` points to your backend (default `ws://127.0.0.1:8000/ws/voice`). If the backend has **`API_SHARED_SECRET`** set, set **`NEXT_PUBLIC_WS_API_KEY`** in the frontend to the same value so the client appends **`?token=…`** on the WebSocket URL and sends **`X-API-Key`** on REST calls from the tools pages.
+`npm run dev` starts Next on **port 80** (default HTTP), so you can open the app at **`http://server.uz`** with **no `:3000` in the URL** — after you point the name at your machine (see below). The API is still on **port 8000**; set in **`.env.local`**, e.g. `NEXT_PUBLIC_API_URL=http://server.uz:8000`.
+
+**Name `server.uz` to this PC (or your server IP):** add a line to the hosts file, e.g. on Windows: `C:\Windows\System32\drivers\etc\hosts` — `127.0.0.1 server.uz` (or your LAN IP for other devices on the same network). Use a real DNS A record in production.
+
+**Port 80 (privileged):** on **Windows**, an **elevated** PowerShell may be required; on **Linux/macOS** you may need `sudo` to bind to port 80. If that fails, use `npm run dev:3000` and open [http://localhost:3000](http://localhost:3000) or [http://server.uz:3000](http://server.uz:3000) instead. For **production** without `:3000`, use `npm run start:80` (same port‑80 caveats) or place **Caddy** / **nginx** on 80/443 and reverse‑proxy to a higher Node port.
+
+Ensure `NEXT_PUBLIC_WS_URL` points to your backend (default `ws://127.0.0.1:8000/ws/voice` when not set) or to `ws://server.uz:8000/ws/voice` when you use a hostname. If the backend has **`API_SHARED_SECRET`** set, set **`NEXT_PUBLIC_WS_API_KEY`** in the frontend to the same value so the client appends **`?token=…`** on the WebSocket URL and sends **`X-API-Key`** on REST calls from the tools pages.
 
 ### Uzbek tools (frontend)
 
@@ -195,6 +201,3 @@ When **`API_SHARED_SECRET`** is set, these routes expect **`X-API-Key: <secret>`
 - **Voice clone:** set **`TTS_REF_AUDIO_PATH`** to a short WAV of your voice (paths can be absolute, or relative to the **repo root** or **`backend/`** working directory—spaces in filenames are fine if the value is quoted in `.env`). Set **`TTS_REF_TEXT`** to the **exact** words spoken in that clip for better timbre match. Restart the server after changing `.env` (`get_settings` is cached).
 - Whisper returns a **final** transcript per utterance (no live partial word stream in this version).
 - If downloads from Hugging Face fail, try a mirror, for example: `set HF_ENDPOINT=https://hf-mirror.com` (Windows cmd: `set`, PowerShell: `$env:HF_ENDPOINT=...`).
-#   M a d i n a - a i - 
- 
- 
