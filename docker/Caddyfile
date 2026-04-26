@@ -1,15 +1,21 @@
-# Caddy: HTTPS with automatic Let’s Encrypt.
+# Caddy: HTTPS (www) + HTTP redirect (apex) without a second cert for the apex.
 #
-# Two names in one block = one certificate for BOTH (new “identifier set” vs aytingchi.uz alone;
-# use this if production LE rate-limits repeated single-name issuances).
+# If Let's Encrypt was rate-limited for aytingchi.uz alone, www.aytingchi.uz can
+# still get its own cert. The app is served on www; apex uses HTTP to redirect
+# to www (no TLS needed for that hop).
 #
-# DNS required before first HTTPS works:
-#   - A/AAAA: aytingchi.uz -> server IP
-#   - A/AAAA: www.aytingchi.uz -> same IP  OR  CNAME: www -> aytingchi.uz
-#
-# Service DNS on compose network: backend, frontend
+# DNS: A/AAAA for aytingchi.uz and for www.aytingchi.uz (or CNAME www -> @).
+# After the LE 168h limit expires for the apex, you can merge into one line:
+#   aytingchi.uz, www.aytingchi.uz {  ...  }
+# and set PUBLIC_ORIGIN to https://aytingchi.uz again if you prefer.
 
-aytingchi.uz, www.aytingchi.uz {
+# Only HTTP: sends users to the working HTTPS name (no cert for apex in this block).
+http://aytingchi.uz {
+	redir https://www.aytingchi.uz{uri} permanent
+}
+
+# Main site (LE issued cert for this name successfully in your latest logs)
+www.aytingchi.uz {
 	encode zstd gzip
 
 	@api {
