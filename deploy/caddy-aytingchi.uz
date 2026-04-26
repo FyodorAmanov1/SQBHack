@@ -1,0 +1,20 @@
+# Caddy: https://aytingchi.uz (and http → https) with no :3000 in the browser.
+# For **Docker**, use ../docker/Caddyfile (this repo) — Caddy is in docker-compose.yml.
+# 1) Install Caddy on the server. 2) Point DNS A/AAAA of aytingchi.uz to this host.
+# 3) Run Next in production, bound to localhost:3000, e.g.:
+#    cd frontend && npm run build && npx --yes next start -H 127.0.0.1 -p 3000
+# 4) Copy this file to e.g. /etc/caddy/Caddyfile, adjust domain if needed, then:
+#    sudo systemctl reload caddy
+#
+# Optional: if FastAPI is on the same machine and you want the API on a subdomain
+# (avoids :8000 in the browser for API calls; set NEXT_PUBLIC_API_URL in .env.production).
+
+aytingchi.uz {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+}
+
+# Uncomment to expose the API on api.aytingchi.uz (see frontend .env NEXT_PUBLIC_API_URL)
+# api.aytingchi.uz {
+# 	reverse_proxy 127.0.0.1:8000
+# }

@@ -1,16 +1,15 @@
-# RealTimeVoice — production compose file.
+# RealTimeVoice — Docker Compose (one entry: Caddy on 80/443, no :3000 / :8000 in the browser)
 #
-# Usage on the server (46.225.79.113):
-#   1. Fill in backend/.env (OpenAI key, TTS_BACKEND=edge recommended for CPU, …).
-#   2. docker compose build
-#   3. docker compose up -d
+# 1) cp .env.example .env
+# 2) Edit .env: CADDY_SITE, PUBLIC_ORIGIN, WS_URL
+# 3) Configure backend/.env
+# 4) docker compose build && docker compose up -d
 #
-# Exposed ports:
-#   3000 -> Next.js frontend   (http://46.225.79.113:3000)
-#   8000 -> FastAPI backend    (http://46.225.79.113:8000  and  ws://…/ws/voice)
+# Browse:  https://<your-domain>  or  http://<server-ip>  (if CADDY_SITE=:80)
 #
-# CORS on the backend is open to all origins (see backend/app/main.py).
-
+# Expose the API on the host (optional, for Postman) — uncomment the two lines on backend.ports
+#
+# name: ...
 name: realtimevoice
 
 services:
@@ -24,18 +23,19 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      # Override anything .env sets that must match the containerized layout.
-      FRONTEND_ORIGIN: "*"
-      STT_MODEL_CACHE_DIR: "/app/models/whisper_ct2"
-      HF_HOME: "/app/.cache/huggingface"
-    ports:
-      - "8000:8000"
+      # Same browser origin as the app (Caddy). Adjust via root .env PUBLIC_ORIGIN.
+      FRONTEND_ORIGIN: ${PUBLIC_ORIGIN:-http://127.0.0.1}
+      STT_MODEL_CACHE_DIR: /app/models/whisper_ct2
+      HF_HOME: /app/.cache/huggingface
+    expose:
+      - "8000"
+    # Optional: open FastAPI on the host for debugging
+    # ports:
+    #   - "8000:8000"
     volumes:
-      # Persist HF downloads + auto-converted CT2 Whisper weights across restarts.
       - backend_hf_cache:/app/.cache/huggingface
       - backend_torch_cache:/app/.cache/torch
       - backend_models:/app/models
-      # Reference voices (optional). Mount your WAV folder read-only.
       - ./myVoice:/app/myVoice:ro
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
@@ -43,8 +43,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
-    # Uncomment to use an NVIDIA GPU on the host (requires nvidia-container-toolkit
-    # and a CUDA-based FROM line in backend/Dockerfile).
+    # Optional GPU: install nvidia-container-toolkit, then uncomment:
     # deploy:
     #   resources:
     #     reservations:
@@ -53,22 +52,37 @@ services:
     #           count: 1
     #           capabilities: [gpu]
 
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: realtimevoice-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      CADDY_SITE: ${CADDY_SITE}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - frontend
+      - backend
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        # Public env is baked in at build time (Next.js inlines NEXT_PUBLIC_*).
-        NEXT_PUBLIC_WS_URL: "ws://46.225.79.113:8000/ws/voice"
-        NEXT_PUBLIC_API_URL: "http://46.225.79.113:8000"
-        NEXT_PUBLIC_WS_API_KEY: ""
+        # Must match the URL users use (Caddy, no :3000 / :8000)
+        NEXT_PUBLIC_API_URL: ${PUBLIC_ORIGIN:-http://127.0.0.1}
+        NEXT_PUBLIC_WS_URL: ${WS_URL:-ws://127.0.0.1/ws/voice}
+        NEXT_PUBLIC_WS_API_KEY: ${NEXT_PUBLIC_WS_API_KEY:-}
     image: realtimevoice-frontend:latest
     container_name: realtimevoice-frontend
     restart: unless-stopped
     depends_on:
       - backend
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
 
 volumes:
   backend_hf_cache:

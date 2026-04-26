@@ -6,6 +6,18 @@ Real-time Uzbek voice chat: browser microphone → **FastAPI** WebSocket → **f
 
 - `backend/` — FastAPI, WebSocket `/ws/voice`, REST `POST /stt`, `POST /llm`, `POST /tts`
 - `frontend/` — Next.js (App Router) client with mic capture and playback
+- `docker/` — Caddyfile used by [docker-compose.yml](docker-compose.yml) (one public entry on **80/443**, no **`:3000`** or **`:8000`** in the browser)
+
+## Docker on the server
+
+Use the included **Caddy** service so the site is at **`https://<your-domain>`** (or **`http://<ip>`** with `CADDY_SITE=:80` in the root `.env`) and the **browser talks to the same origin**; paths like `/stt` and `/ws/voice` are routed to FastAPI, everything else to Next.
+
+1. Copy and edit the root [`.env.example`](.env.example) → **`.env`** (same folder as `docker-compose.yml` — **not** `frontend/.env`). Set **`CADDY_SITE`**, **`PUBLIC_ORIGIN`**, and **`WS_URL`** to match what users will type (e.g. `aytingchi.uz` and `wss://…`).
+2. Configure **`backend/.env`** (Ollama, TTS, etc.) as in [Backend setup](#backend-setup) below.
+3. From the **repo root**: `docker compose build` then `docker compose up -d`.
+4. Open **`PUBLIC_ORIGIN`** in a browser (no **`:3000`** / **`:8000`**).
+
+**Optional:** uncomment **`backend.ports`** in `docker-compose.yml` to expose `8000` on the host for debugging. Full host setup (firewall, DNS) is in [deploy/SERVER-SETUP.md](deploy/SERVER-SETUP.md).
 
 ## Prerequisites
 
@@ -152,6 +164,29 @@ npm run dev
 **Name `server.uz` to this PC (or your server IP):** add a line to the hosts file, e.g. on Windows: `C:\Windows\System32\drivers\etc\hosts` — `127.0.0.1 server.uz` (or your LAN IP for other devices on the same network). Use a real DNS A record in production.
 
 **Port 80 (privileged):** on **Windows**, an **elevated** PowerShell may be required; on **Linux/macOS** you may need `sudo` to bind to port 80. If that fails, use `npm run dev:3000` and open [http://localhost:3000](http://localhost:3000) or [http://server.uz:3000](http://server.uz:3000) instead. For **production** without `:3000`, use `npm run start:80` (same port‑80 caveats) or place **Caddy** / **nginx** on 80/443 and reverse‑proxy to a higher Node port.
+
+### Production: `aytingchi.uz` without `:3000`
+
+**Preferred:** use **[Docker on the server](#docker-on-the-server)** so **Caddy** in `docker-compose.yml` serves **80/443** and you do not publish **3000** or **8000** to the public.
+
+If the site is showing **`http://aytingchi.uz:3000`**, the Next process is still bound to **port 3000** and the browser is talking to it **directly**. Browsers do not hide the port: you have to **listen on 80/443** for HTTP/HTTPS, or use a **reverse proxy**.
+
+**Manual setup (VPS with DNS on `aytingchi.uz`):**
+
+1. Keep Next on **localhost only** (typical: `PORT=3000` / `next start` or `npm run start` on `127.0.0.1:3000`).
+2. Run **Caddy** or **nginx** on the server on **:80** and **:443**, with `server_name aytingchi.uz`, and **`proxy_pass` / `reverse_proxy` to `http://127.0.0.1:3000`**.
+3. Point the domain’s **A record** to the server’s public IP; open the firewall for **80** and **443** (not 3000, if the proxy is the only public entry).
+
+**Step‑by‑step server instructions (DNS, firewall, build, Caddy, systemd):** [deploy/SERVER-SETUP.md](deploy/SERVER-SETUP.md)
+
+**Config snippets** in this repo:
+
+- [deploy/caddy-aytingchi.uz](deploy/caddy-aytingchi.uz) — Caddy (automatic HTTPS is straightforward).
+- [deploy/nginx-aytingchi.uz.conf](deploy/nginx-aytingchi.uz.conf) — Nginx (use Certbot for TLS).
+
+After that, users open **`https://aytingchi.uz`** with **no** `:3000` in the URL.
+
+**Frontend → FastAPI in production:** the UI still must know where the API is. `lib/apiBase.ts` will use **`NEXT_PUBLIC_API_URL`** in `.env.production` on the build server, e.g. `https://aytingchi.uz:8000` if the API is public on 8000, or put the API behind the same host (e.g. subdomain `api.aytingchi.uz` → 8000) and set `NEXT_PUBLIC_API_URL=https://api.aytingchi.uz` before `npm run build`.
 
 Ensure `NEXT_PUBLIC_WS_URL` points to your backend (default `ws://127.0.0.1:8000/ws/voice` when not set) or to `ws://server.uz:8000/ws/voice` when you use a hostname. If the backend has **`API_SHARED_SECRET`** set, set **`NEXT_PUBLIC_WS_API_KEY`** in the frontend to the same value so the client appends **`?token=…`** on the WebSocket URL and sends **`X-API-Key`** on REST calls from the tools pages.
 

@@ -16,8 +16,9 @@ WORKDIR /app
 
 # Public env vars must be provided at build time because Next.js inlines them
 # into the client bundle. Override via `--build-arg` in docker-compose or CLI.
-ARG NEXT_PUBLIC_WS_URL=ws://46.225.79.113:8000/ws/voice
-ARG NEXT_PUBLIC_API_URL=http://46.225.79.113:8000
+# Overridden by docker-compose `build.args` (see root .env: PUBLIC_ORIGIN, WS_URL)
+ARG NEXT_PUBLIC_WS_URL=ws://127.0.0.1/ws/voice
+ARG NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ARG NEXT_PUBLIC_WS_API_KEY=
 ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL} \
     NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \

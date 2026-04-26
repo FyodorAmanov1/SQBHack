@@ -1,0 +1,32 @@
+# Caddy: single public entry on 80/443. Routes FastAPI by path, everything else to Next.
+# CADDY_SITE is set in docker-compose (e.g. aytingchi.uz for HTTPS, or :80 for HTTP on any host).
+# Service DNS: backend, frontend (compose network).
+
+{$CADDY_SITE::80} {
+	encode zstd gzip
+
+	@api {
+		path /health
+		path /stt
+		path /llm
+		path /tts
+		path /voice_reply
+		path /operator-advice
+		path /docs
+		path /docs/*
+		path /redoc
+		path /redoc*
+		path /openapi.json
+		path /client-analytics*
+		path /voices
+		path /ws*
+	}
+
+	handle @api {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
