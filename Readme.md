@@ -10,9 +10,9 @@ Real-time Uzbek voice chat: browser microphone → **FastAPI** WebSocket → **f
 
 ## Docker on the server
 
-Use the included **Caddy** service so the site is at **`https://<your-domain>`** (or **`http://<ip>`** with `CADDY_SITE=:80` in the root `.env`) and the **browser talks to the same origin**; paths like `/stt` and `/ws/voice` are routed to FastAPI, everything else to Next.
+Use the included **Caddy** service (default **HTTP** on port **80** via [`docker/Caddyfile`](docker/Caddyfile) — edit the first line to your **domain** for **HTTPS**). The **browser uses one origin**; paths like `/stt` and `/ws/voice` go to FastAPI, everything else to Next.
 
-1. Copy and edit the root [`.env.example`](.env.example) → **`.env`** (same folder as `docker-compose.yml` — **not** `frontend/.env`). Set **`CADDY_SITE`**, **`PUBLIC_ORIGIN`**, and **`WS_URL`** to match what users will type (e.g. `aytingchi.uz` and `wss://…`).
+1. Copy and edit the root [`.env.example`](.env.example) → **`.env`** (same folder as `docker-compose.yml` — **not** `frontend/.env`). Set **`PUBLIC_ORIGIN`** and **`WS_URL`** to match what users will type. For a **real domain with HTTPS**, change the first line of [`docker/Caddyfile`](docker/Caddyfile) from **`:80 {`** to **`aytingchi.uz {`** (your domain) and use **`https` / `wss`** in `.env` — then `docker compose up -d` again.
 2. Configure **`backend/.env`** (Ollama, TTS, etc.) as in [Backend setup](#backend-setup) below.
 3. From the **repo root**: `docker compose build` then `docker compose up -d`.
 4. Open **`PUBLIC_ORIGIN`** in a browser (no **`:3000`** / **`:8000`**).

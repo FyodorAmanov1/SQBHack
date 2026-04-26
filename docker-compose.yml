@@ -1,11 +1,11 @@
 # RealTimeVoice — Docker Compose (one entry: Caddy on 80/443, no :3000 / :8000 in the browser)
 #
 # 1) cp .env.example .env
-# 2) Edit .env: CADDY_SITE, PUBLIC_ORIGIN, WS_URL
+# 2) Edit .env: PUBLIC_ORIGIN, WS_URL (and docker/Caddyfile for HTTPS: first line = your domain)
 # 3) Configure backend/.env
 # 4) docker compose build && docker compose up -d
 #
-# Browse:  https://<your-domain>  or  http://<server-ip>  (if CADDY_SITE=:80)
+# Browse:  http://<server-ip>  (default)  or  https://<domain>  after Caddyfile + .env
 #
 # Expose the API on the host (optional, for Postman) — uncomment the two lines on backend.ports
 #
@@ -59,8 +59,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      CADDY_SITE: ${CADDY_SITE}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
     depends_on:

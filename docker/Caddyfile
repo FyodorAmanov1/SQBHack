@@ -1,8 +1,8 @@
-# Caddy: single public entry on 80/443. Routes FastAPI by path, everything else to Next.
-# CADDY_SITE is set in docker-compose (e.g. aytingchi.uz for HTTPS, or :80 for HTTP on any host).
+# Caddy: public HTTP on :80. Routes FastAPI by path, everything else to Next.
+# For automatic HTTPS, replace the first line with your domain, e.g.  aytingchi.uz  {  (same block body).
 # Service DNS: backend, frontend (compose network).
 
-{$CADDY_SITE::80} {
+:80 {
 	encode zstd gzip
 
 	@api {

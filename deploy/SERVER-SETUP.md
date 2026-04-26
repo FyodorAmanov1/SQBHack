@@ -4,7 +4,7 @@
 
 On the VPS, install **Docker** and **Docker Compose plugin**, clone the repo, then from the **repo root**:
 
-1. Copy [`.env.example`](../.env.example) to `.env` and set `CADDY_SITE`, `PUBLIC_ORIGIN`, and `WS_URL` (same scheme/host the user will use in the browser — no `:3000` or `:8000`).
+1. Copy [`.env.example`](../.env.example) to `.env` and set `PUBLIC_ORIGIN` and `WS_URL`. For a domain with **HTTPS**, set the first line of [docker/Caddyfile](../docker/Caddyfile) to your domain (e.g. `aytingchi.uz {`) and use `https` / `wss` in `.env` (no `:3000` or `:8000` in the public URL).
 2. Configure `backend/.env`.
 3. Run `docker compose build` and `docker compose up -d`.
 
